@@ -2,30 +2,37 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import static io.restassured.RestAssured.given;
 
 public class test {
 
     public void compareSpecies(String morty, String character) throws Exception {
-        String e1 = "Расса Морти и последнего персонажа не совпадает";
-        String done = "Расса Морти и последнего персонажа совпадает";
-        if(!morty.equals(character)) {throw new Exception(e1);}
-        else System.out.println(done);
+        String e1 = "Расы Морти и последнего персонажа не совпадают";
+        String done = "Расы Морти и последнего персонажа совпадают";
+        if (!morty.equals(character)) {
+            throw new Exception(e1);
+        } else System.out.println(done);
     }
 
     public void compareLocation(String morty, String character) throws Exception {
-        String e1 = "Локации Морти и последнего персонажа не совпадает";
-        String done = "Локации Морти и последнего персонажа совпадает";
-        if(!morty.equals(character)) {throw new Exception(e1);}
-        else System.out.println(done);
+        String e1 = "Локации Морти и последнего персонажа не совпадают";
+        String done = "Локации Морти и последнего персонажа совпадают";
+        if (!morty.equals(character)) {
+            throw new Exception(e1);
+        } else System.out.println(done);
     }
 
     @Tag("1api")
     @Test
-    @DisplayName("Характер Морти")
+    @DisplayName("Морти")
     public void morti() throws Exception {
 
         Response response1 = given()
@@ -44,8 +51,7 @@ public class test {
 
         String lastEpisode = episodeArrayWithMorty.getString(episodeCountWithMorty - 1);
 
-        System.out.println();
-        System.out.println("Последний эпизод в котором был Морти Смит — " + lastEpisode.substring(lastEpisode.length() - 2));
+        System.out.println("\nПоследний эпизод в котором был Морти Смит — " + lastEpisode.substring(lastEpisode.length() - 2));
 
         Response response2 = given()
                 .contentType(ContentType.JSON)
@@ -85,16 +91,47 @@ public class test {
         System.out.println("\nПроводим сравнения:");
 
         try {
-            compareSpecies(species,mortySpecies);
+            compareSpecies(species, mortySpecies);
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
         }
-        catch (Exception ex) {System.out.println(ex.getMessage());}
 
         try {
             compareLocation(mortyLocation, location);
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
         }
-        catch (Exception ex) {System.out.println(ex.getMessage());}
 
         System.out.println("\nСравнение завершено");
+    }
+
+    @Tag("2api")
+    @Test
+    @DisplayName("Углубление в API")
+    public void potato() throws IOException {
+
+        JSONObject jsonObject = new JSONObject(new String(Files.readAllBytes(Paths.get("/Users/sorokin/IdeaProjects/test_lesson_05/src/test/resources/test2.json"))));
+        String name = jsonObject.getString("name");
+
+        jsonObject.put("name", "Tomato");
+        jsonObject.put("job", "Eat maket");
+
+        Response response1 = given()
+                .baseUri("https://reqres.in/")
+                .contentType("application/json;charset=UTF-8")
+                .when()
+                .body(jsonObject.toString())
+                .post("/api/users")
+                .then()
+                .statusCode(201)
+                .extract().response();
+
+        String tomato = response1.getBody().asString();
+        JSONObject json = new JSONObject(tomato);
+        Assertions.assertEquals(json.getString("name"), "Tomato");
+        System.out.println("name совпадает");
+        Assertions.assertEquals(json.getString("job"), "Eat maket");
+        System.out.println("job совпадает");
     }
 }
 
