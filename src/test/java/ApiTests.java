@@ -1,3 +1,4 @@
+import hooks.ApiHooks;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.json.JSONArray;
@@ -6,13 +7,16 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static io.restassured.RestAssured.given;
 
-public class test {
+@ExtendWith({ApiHooks.class})
+public class ApiTests {
 
     public void compareSpecies(String morty, String character) throws Exception {
         String e1 = "Расы Морти и последнего персонажа не совпадают";
@@ -30,7 +34,36 @@ public class test {
         } else System.out.println(done);
     }
 
-    @Tag("1api")
+    @Tag("api")
+    @Test
+    @DisplayName("Томат")
+    public void potato() throws IOException {
+
+        JSONObject jsonObject = new JSONObject(new String(Files.readAllBytes(Paths.get("/Users/sorokin/IdeaProjects/test_lesson_05/src/test/resources/test2.json"))));
+        String name = jsonObject.getString("name");
+
+        jsonObject.put("name", "Tomato");
+        jsonObject.put("job", "Eat maket");
+
+        Response response1 = given()
+                .baseUri("https://reqres.in/")
+                .contentType("application/json;charset=UTF-8")
+                .when()
+                .body(jsonObject.toString())
+                .post("/api/users")
+                .then()
+                .statusCode(201)
+                .extract().response();
+
+        String tomato = response1.getBody().asString();
+        JSONObject json = new JSONObject(tomato);
+        Assertions.assertEquals(json.getString("name"), "Tomato");
+        System.out.println("name совпадает");
+        Assertions.assertEquals(json.getString("job"), "Eat maket");
+        System.out.println("job совпадает");
+    }
+
+    @Tag("api")
     @Test
     @DisplayName("Морти")
     public void morti() throws Exception {
@@ -38,9 +71,11 @@ public class test {
         Response response1 = given()
                 .baseUri("https://rickandmortyapi.com")
                 .contentType(ContentType.JSON)
+                .log().all()
                 .when()
                 .get("/api/character/2")
                 .then()
+                .statusCode(200)
                 .extract().response();
 
         String morty = response1.getBody().asString();
@@ -105,34 +140,7 @@ public class test {
         System.out.println("\nСравнение завершено");
     }
 
-    @Tag("2api")
-    @Test
-    @DisplayName("Углубление в API")
-    public void potato() throws IOException {
 
-        JSONObject jsonObject = new JSONObject(new String(Files.readAllBytes(Paths.get("/Users/sorokin/IdeaProjects/test_lesson_05/src/test/resources/test2.json"))));
-        String name = jsonObject.getString("name");
-
-        jsonObject.put("name", "Tomato");
-        jsonObject.put("job", "Eat maket");
-
-        Response response1 = given()
-                .baseUri("https://reqres.in/")
-                .contentType("application/json;charset=UTF-8")
-                .when()
-                .body(jsonObject.toString())
-                .post("/api/users")
-                .then()
-                .statusCode(201)
-                .extract().response();
-
-        String tomato = response1.getBody().asString();
-        JSONObject json = new JSONObject(tomato);
-        Assertions.assertEquals(json.getString("name"), "Tomato");
-        System.out.println("name совпадает");
-        Assertions.assertEquals(json.getString("job"), "Eat maket");
-        System.out.println("job совпадает");
-    }
 }
 
 
